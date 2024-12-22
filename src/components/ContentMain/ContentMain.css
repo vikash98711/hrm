@@ -1,0 +1,128 @@
+/* main content holder */
+.main-content-holder {
+  display: grid;
+  row-gap: 20px;
+}
+.content-grid-one {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 16px;
+}
+.content-grid-two {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  column-gap: 16px;
+}
+
+.subgrid-two {
+  display: grid;
+  row-gap: 20px;
+  height: 100%;
+}
+
+@media screen and (max-width: 1200px) {
+  .content-grid-one,
+  .content-grid-two {
+    column-gap: 12px;
+  }
+  .main-content-holder,
+  .subgrid-two {
+    row-gap: 12px;
+  }
+}
+
+@media screen and (max-width: 992px) {
+  .content-grid-one {
+    grid-template-columns: repeat(2, 1fr);
+    row-gap: 12px;
+  }
+  .content-grid-two {
+    grid-template-columns: repeat(2, 1fr);
+  }
+  .content-grid-two .grid-two-item:nth-child(3) {
+    grid-column-start: 1;
+    grid-column-end: 3;
+  }
+  .content-grid-two .grid-two-item:nth-child(3) .subgrid-two {
+    grid-template-columns: repeat(2, 1fr);
+    height: 220px;
+    column-gap: 12px;
+  }
+  .content-grid-two {
+    row-gap: 12px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  .content-grid-one {
+    grid-template-columns: repeat(1, 1fr);
+    column-gap: 0;
+  }
+  .content-grid-two {
+    grid-template-columns: repeat(1, 1fr);
+    column-gap: 0;
+  }
+  .content-grid-two .grid-two-item:nth-child(1) {
+    grid-column-start: 1;
+    grid-column-end: 3;
+  }
+  .content-grid-two .grid-two-item:nth-child(3) .subgrid-two {
+    grid-template-columns: repeat(1, 1fr);
+    height: auto;
+  }
+  .content-grid-two .grid-two-item:nth-child(3) .subgrid-two .subgrid-two-item {
+    height: 220px;
+  }
+}
+.main-content {
+  position: sticky;
+  top: 2px;
+  z-index: 5;
+}
+
+.box-downshadow {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0)
+}
+
+.Home-total-card-box  .col-lg-4{
+margin: 8px 0px;
+}
+
+.card-total-orders {
+  background-color: #3498db !important; /* Blue */
+  color: white !important;
+}
+
+.card-pending-orders {
+  background-color: #e67e22 !important; /* Orange */
+  color: white !important;
+}
+
+.card-cancel-orders {
+  background-color: #e74c3c !important; /* Red */
+  color: white !important;
+}
+
+.card-todays-orders {
+  background-color: #2ecc71 !important; /* Green */
+  color: white !important;
+}
+
+.card-return-orders {
+  background-color: #9b59b6 !important; /* Purple */
+  color: white !important;
+}
+
+.card-total-income {
+  background-color: #f39c12 !important; /* Yellow */
+  color: white !important;
+}
+
+.box-downshadow {
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+  transition: transform 0.2s; /* Add smooth transition */
+}
+
+.box-downshadow:hover {
+  transform: scale(1.05); /* Slightly scale up on hover */
+}

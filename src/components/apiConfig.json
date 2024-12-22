@@ -1,0 +1,5 @@
+{
+    "login": "http://localhost:5000/api/admins/login",
+    "loginServer": "https://spicebucket-n9ui.onrender.com/api/admins/login"
+  }
+  

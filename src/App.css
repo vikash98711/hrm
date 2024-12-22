@@ -1,0 +1,261 @@
+@import url("https://fonts.googleapis.com/css2?family=Bai+Jamjuree:ital,wght@0,200;0,300;0,400;0,500;0,600;0,700;1,200;1,300;1,400;1,500;1,600;1,700&display=swap");
+
+* {
+  padding: 0;
+  margin: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --lightred : #fd0d40;
+  --clr-primary: #29221d;
+  --clr-primar-light: #473b33;
+  --clr-secondary: #1e1611;
+  --clr-white: #fff;
+  --clr-black: #000;
+  --clr-pumpkin: #fe6c00;
+  --clr-silver: #a8a5a6;
+  --clr-silver-v1: #bdbabb;
+  --clr-scarlet: #fe1e00;
+  --clr-scarlet-v1: rgb(254, 30, 0, 0.79);
+  --clr-green: #00fe93;
+  --clr-yellow: #fec80a;
+  --clr-jet: #302924;
+  --clr-peach: #ffc397;
+  --font-family-bai: "Bai Jamjuree", sans-serif;
+  --transition-default: all 300ms ease-in-out;
+}
+
+
+ol, ul {
+  padding-left: 0px!important;
+}
+
+body {
+  font-family: var(--font-family-bai);
+}
+
+ul {
+  list-style-type: none;
+}
+a {
+  color: unset;
+  text-decoration: none;
+  color: var(--clr-white);
+}
+button {
+  background-color: transparent;
+  border: none;
+  cursor: pointer;
+}
+.button-red{
+  background-color: var(--lightred) !important;
+  border: 1px solid var(--lightred) !important;
+}
+.img-fit-cover img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.text-white {
+  color: var(--clr-white);
+}
+.text-silver-v1 {
+  color: var(--clr-silver-v1);
+}
+.text-scarlet {
+  color: var(--clr-scarlet);
+}
+.text-green {
+  color: var(--clr-green);
+}
+.bg-jet {
+  background: var(--clr-jet);
+}
+
+.text-sm {
+  font-size: 14px;
+}
+
+.app {
+  display: flex;
+  min-height: 100vh;
+}
+
+/* commons */
+.lg-value {
+  font-size: 24px;
+  font-weight: 600;
+}
+.grid-common {
+  /* background-color: var(--clr-primary); */
+  background-color: #f4ede8;
+  border-radius: 12px;
+  box-shadow: rgba(0, 0, 0, 0.05) 0px 8px 24px;
+  color: black;
+  padding: 24px;
+}
+.grid-c-title {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  margin-bottom: 16px;
+}
+.grid-c-title-text {
+  font-weight: 400;
+  color: var(--clr-silver);
+}
+.grid-c-title-icon img {
+  width: 24px;
+}
+
+@media screen and (max-width: 1400px) {
+  .grid-common {
+    padding: 16px;
+  }
+  body {
+    font-size: 14px !important;
+  }
+}
+.content {
+  width: 100%;
+} 
+
+.box-downshadow {
+  box-shadow: 0 6px 12px rgba(0, 0, 0, 0.2), 0 2px 6px rgba(0, 0, 0, 0)
+}
+
+.switch-active .form-check-input {
+  background-color: green;
+  border-color: green;
+}
+
+
+
+.form-check-input:checked {
+  background-color: green !important; /* Default color for checked */
+  border-color: green; /* Default border color */
+}
+
+
+i.fa-solid.fa-trash-can-arrow-up {
+  color: #e3273a;
+  font-size: 17px;
+}
+
+i.fa-regular.fa-pen-to-square {
+  font-size: 19px;
+  color: #2c49d7;
+}
+a.Customnav-link.common-submenu-text {
+  /* font-size: 11px; */
+  /* height: 35px; */
+  color: #99948b;
+}
+table.table.table-striped.table-bordered.table-hover {
+  /* border: 1px dashed grey; */
+  border-radius: 5px;
+}
+
+.loginbox input[type="text"], input[type="password"] {
+    
+  border: none;
+  border-bottom: 1px solid #a39a9a;
+  background: transparent;
+  outline: none;
+  height: 40px;
+  color: #fff;
+  font-size: 16px;
+  border: 1px solid grey !important;
+  
+}
+
+.modal-dialog.modal-lg {
+  border: 13px solid #cb169c !important;
+}
+.modal-content {
+  border-radius: 0px !important;
+  border: none !important;
+
+
+
+}
+
+a.Customnav-link.downarrow-sublist {
+  border: 1px solid grey;
+  font-size: 11px;
+  /* margin-left: 43px; */
+}
+
+.Main-leaves-wrapper a.nav-link.active {
+  background-color: #ac3f78 !important;
+  color: white !important;
+}
+
+.Main-leaves-wrapper a.nav-link {
+  background-color: #bcc1b7;
+  color: black;
+  font-size: 13px;
+}
+.fw-600{
+  font-weight: 600 !important;
+}
+.fw-400{
+  font-weight: 400!important;
+}
+
+.box-shadow-common{
+  box-shadow: 5px 10px 18px #c1c5cf;
+
+}
+.box-shadow-common-strip{
+  box-shadow: 5px 10px 18px #d8dbe2;
+
+}
+.wrapper-employee-view .card p {
+  padding: 8px;
+  /* border: 1px dashed #d42b2b; */
+  margin-bottom: 5px !important;
+  font-family: sans-serif;
+  font-size: 13px;
+  /* border-bottom: 1px solid grey; */
+  border-top: 1px solid grey;
+}
+td {
+  font-size: 12px;
+}
+th {
+  font-size: 12px;
+}
+.wrapper-employee-view .card {
+/* box-shadow: 12px 15px #1c2434; */
+/* border: 1px dashed black; */
+box-shadow: 5px 10px 18px #c1c5cf;
+
+    width: 35rem;
+    margin: 0px auto;
+  }
+  .employeeEdit-wrapper {
+    box-shadow: 5px 10px 18px #c1c5cf;
+    /* border: 1px dashed black; */
+}
+
+  @media (min-width:200px)  and (max-width:568px){
+    .wrapper-employee-view .card{
+      width: 100% !important;
+    }
+    
+  }
+
+  .form-control {
+    border: 1px solid #cb169c !important;
+  }
+
+
+  .attendence-record-body {
+    height: 368px;
+    overflow-y: scroll;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+}
