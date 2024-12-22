@@ -14,18 +14,18 @@ const Chat = () => {
   const [socket, setSocket] = useState(null);
   const [isCalling, setIsCalling] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
-  const [callType, setCallType] = useState("audio"); // audio or video call
+  const [callType, setCallType] = useState("audio");
   const [peerConnection, setPeerConnection] = useState(null);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
-  const [incomingCall, setIncomingCall] = useState(null); // Stores incoming call info
+  const [incomingCall, setIncomingCall] = useState(null);
 
   const profileImage = sessionStorage.getItem("profile");
   const username = sessionStorage.getItem("name");
   const userId = sessionStorage.getItem("id");
   const [searchQuery, setSearchQuery] = useState("");
-  const localVideoRef = useRef(null); // Video ref for local stream
-  const remoteVideoRef = useRef(null); // Video ref for remote stream
+  const localVideoRef = useRef(null);
+  const remoteVideoRef = useRef(null);
 
   useEffect(() => {
     const socketInstance = io("https://backfile-h9t9.onrender.com", {
@@ -43,10 +43,16 @@ const Chat = () => {
       }
     });
 
-    // Debugging the incoming call
     socketInstance.on("call_user", (data) => {
       console.log("Incoming call data received:", data);
-      setIncomingCall(data); 
+      setIncomingCall(data);
+    });
+
+    socketInstance.on("accept_call", (data) => {
+      peerConnection
+        .setRemoteDescription(new RTCSessionDescription(data.answer))
+        .then(() => console.log("Call accepted and remote description set"))
+        .catch((err) => console.error("Error setting remote description:", err));
     });
 
     socketInstance.on("ice_candidate", (candidate) => {
@@ -56,9 +62,8 @@ const Chat = () => {
     });
 
     socketInstance.on("end_call", (data) => {
-      if (data.receiverId === userId) {
-        handleEndCall();
-      }
+      console.log("Call ended:", data);
+      handleEndCall();
     });
 
     setSocket(socketInstance);
@@ -85,32 +90,29 @@ const Chat = () => {
     fetchMessages(selected);
   };
 
-  const startCall = (callerId, type) => {
+  const startCall = (receiverId, type) => {
     setIsCalling(true);
     setCallType(type);
-    // Create peer connection
+
     const peer = new RTCPeerConnection();
     setPeerConnection(peer);
 
-    // Get user media (audio or video)
     const mediaConstraints = type === "video" ? { video: true, audio: true } : { audio: true };
 
     navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then((stream) => {
         setLocalStream(stream);
-        const tracks = stream.getTracks();
-        tracks.forEach((track) => peer.addTrack(track, stream));
+        stream.getTracks().forEach((track) => peer.addTrack(track, stream));
 
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
 
-        // Create offer and send to the receiver
         peer.createOffer().then((offer) => {
           peer.setLocalDescription(offer);
           socket.emit("call_user", {
-            receiverId: callerId,
+            receiverId,
             callerId: userId,
             offer,
             callType: type,
@@ -121,15 +123,53 @@ const Chat = () => {
       .catch((err) => {
         console.error("Error accessing media devices.", err);
       });
+
+    peer.ontrack = (event) => {
+      if (!remoteStream) {
+        const remoteMediaStream = new MediaStream();
+        event.streams[0].getTracks().forEach((track) => remoteMediaStream.addTrack(track));
+        setRemoteStream(remoteMediaStream);
+
+        if (remoteVideoRef.current) {
+          remoteVideoRef.current.srcObject = remoteMediaStream;
+        }
+      }
+    };
   };
 
-  const handleAcceptCall = (callerId, callType) => {
-    setIncomingCall(null); // Clear the incoming call notification
-    startCall(callerId, callType); // Proceed with the call process
+  const handleAcceptCall = (callerId, offer) => {
+    const peer = new RTCPeerConnection();
+    setPeerConnection(peer);
+
+    const mediaConstraints = incomingCall.callType === "video" ? { video: true, audio: true } : { audio: true };
+
+    navigator.mediaDevices
+      .getUserMedia(mediaConstraints)
+      .then((stream) => {
+        setLocalStream(stream);
+        stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+
+        if (localVideoRef.current) {
+          localVideoRef.current.srcObject = stream;
+        }
+
+        peer.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
+          peer.createAnswer().then((answer) => {
+            peer.setLocalDescription(answer);
+            socket.emit("accept_call", {
+              callerId,
+              receiverId: userId,
+              answer,
+            });
+            setIsInCall(true);
+          });
+        });
+      })
+      .catch((err) => console.error("Error accessing media devices.", err));
   };
 
   const handleRejectCall = () => {
-    setIncomingCall(null); // Clear the incoming call notification
+    setIncomingCall(null);
   };
 
   const handleEndCall = () => {
@@ -147,10 +187,9 @@ const Chat = () => {
       setIsInCall(false);
       setIsCalling(false);
     }
-
     socket.emit("end_call", {
       callerId: userId,
-      receiverId: selectedUser._id,
+      receiverId: selectedUser?._id,
     });
   };
 
@@ -162,9 +201,9 @@ const Chat = () => {
         message: newMessage,
         senderImage: profileImage,
       };
-  
+
       socket.emit("send_message", messageData);
-  
+
       setMessages((prevMessages) => [
         ...prevMessages,
         { senderId: userId, message: newMessage, senderImage: profileImage },
