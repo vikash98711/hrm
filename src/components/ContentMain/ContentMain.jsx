@@ -25,7 +25,7 @@ const ContentMain = () => {
   // Fetch To-Do items from the server
   const fetchTodos = async () => {
     try {
-      const response = await axios.get(`https://backfile-h9t9.onrender.com/api/todos/${userId}`, {
+      const response = await axios.get(`http://localhost:4000/api/todos/${userId}`, {
         headers: { Authorization: `Bearer ${token}` },
       });
       setTodoItems(response.data.todos);

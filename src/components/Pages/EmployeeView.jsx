@@ -64,7 +64,7 @@ const EmployeeView = () => {
         }
       
         try {
-          const response = await axios.put(`https://backfile-h9t9.onrender.com/api/user/edituser/${id}`, data, {
+          const response = await axios.put(`http://localhost:4000/api/user/edituser/${id}`, data, {
             headers: { "Content-Type": "multipart/form-data" },
           });
       

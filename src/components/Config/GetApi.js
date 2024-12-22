@@ -58,7 +58,7 @@ export const GetAllRole = async()=>{
 
 export const GetAllEmployee = async ()=>{
     try {
-        const res = await axios.get('https://backfile-h9t9.onrender.com/api/user/employees')
+        const res = await axios.get('http://localhost:4000/api/user/employees')
        
         // UserData(res.data.employees)
         return res.data.employees

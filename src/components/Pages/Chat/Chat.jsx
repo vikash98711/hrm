@@ -14,21 +14,22 @@ const Chat = () => {
   const [socket, setSocket] = useState(null);
   const [isCalling, setIsCalling] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
-  const [callType, setCallType] = useState("audio");
+  const [callType, setCallType] = useState("audio"); // audio or video call
   const [peerConnection, setPeerConnection] = useState(null);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
-  const [incomingCall, setIncomingCall] = useState(null);
+  const [incomingCall, setIncomingCall] = useState(null); // Stores incoming call info
+  const [isRinging, setIsRinging] = useState(false); // Ringing status for outgoing call
 
   const profileImage = sessionStorage.getItem("profile");
   const username = sessionStorage.getItem("name");
   const userId = sessionStorage.getItem("id");
   const [searchQuery, setSearchQuery] = useState("");
-  const localVideoRef = useRef(null);
-  const remoteVideoRef = useRef(null);
+  const localVideoRef = useRef(null); // Video ref for local stream
+  const remoteVideoRef = useRef(null); // Video ref for remote stream
 
   useEffect(() => {
-    const socketInstance = io("https://backfile-h9t9.onrender.com", {
+    const socketInstance = io("http://localhost:4000", {
       transports: ["websocket"],
     });
 
@@ -43,16 +44,10 @@ const Chat = () => {
       }
     });
 
+    // Incoming call event listener
     socketInstance.on("call_user", (data) => {
       console.log("Incoming call data received:", data);
-      setIncomingCall(data);
-    });
-
-    socketInstance.on("accept_call", (data) => {
-      peerConnection
-        .setRemoteDescription(new RTCSessionDescription(data.answer))
-        .then(() => console.log("Call accepted and remote description set"))
-        .catch((err) => console.error("Error setting remote description:", err));
+      setIncomingCall(data); 
     });
 
     socketInstance.on("ice_candidate", (candidate) => {
@@ -62,8 +57,9 @@ const Chat = () => {
     });
 
     socketInstance.on("end_call", (data) => {
-      console.log("Call ended:", data);
-      handleEndCall();
+      if (data.receiverId === userId) {
+        handleEndCall();
+      }
     });
 
     setSocket(socketInstance);
@@ -76,7 +72,7 @@ const Chat = () => {
   const fetchMessages = async (selected) => {
     try {
       const response = await axios.get(
-        `https://backfile-h9t9.onrender.com/api/messages/chat/${userId}/${selected._id}`
+        `http://localhost:4000/api/messages/chat/${userId}/${selected._id}`
       );
       setMessages(response.data);
     } catch (err) {
@@ -90,29 +86,33 @@ const Chat = () => {
     fetchMessages(selected);
   };
 
-  const startCall = (receiverId, type) => {
+  const startCall = (callerId, type) => {
     setIsCalling(true);
+    setIsRinging(true); // Start ringing status
     setCallType(type);
-
+    // Create peer connection
     const peer = new RTCPeerConnection();
     setPeerConnection(peer);
 
+    // Get user media (audio or video)
     const mediaConstraints = type === "video" ? { video: true, audio: true } : { audio: true };
 
     navigator.mediaDevices
       .getUserMedia(mediaConstraints)
       .then((stream) => {
         setLocalStream(stream);
-        stream.getTracks().forEach((track) => peer.addTrack(track, stream));
+        const tracks = stream.getTracks();
+        tracks.forEach((track) => peer.addTrack(track, stream));
 
         if (localVideoRef.current) {
           localVideoRef.current.srcObject = stream;
         }
 
+        // Create offer and send to the receiver
         peer.createOffer().then((offer) => {
           peer.setLocalDescription(offer);
           socket.emit("call_user", {
-            receiverId,
+            receiverId: callerId,
             callerId: userId,
             offer,
             callType: type,
@@ -123,53 +123,17 @@ const Chat = () => {
       .catch((err) => {
         console.error("Error accessing media devices.", err);
       });
-
-    peer.ontrack = (event) => {
-      if (!remoteStream) {
-        const remoteMediaStream = new MediaStream();
-        event.streams[0].getTracks().forEach((track) => remoteMediaStream.addTrack(track));
-        setRemoteStream(remoteMediaStream);
-
-        if (remoteVideoRef.current) {
-          remoteVideoRef.current.srcObject = remoteMediaStream;
-        }
-      }
-    };
   };
 
-  const handleAcceptCall = (callerId, offer) => {
-    const peer = new RTCPeerConnection();
-    setPeerConnection(peer);
-
-    const mediaConstraints = incomingCall.callType === "video" ? { video: true, audio: true } : { audio: true };
-
-    navigator.mediaDevices
-      .getUserMedia(mediaConstraints)
-      .then((stream) => {
-        setLocalStream(stream);
-        stream.getTracks().forEach((track) => peer.addTrack(track, stream));
-
-        if (localVideoRef.current) {
-          localVideoRef.current.srcObject = stream;
-        }
-
-        peer.setRemoteDescription(new RTCSessionDescription(offer)).then(() => {
-          peer.createAnswer().then((answer) => {
-            peer.setLocalDescription(answer);
-            socket.emit("accept_call", {
-              callerId,
-              receiverId: userId,
-              answer,
-            });
-            setIsInCall(true);
-          });
-        });
-      })
-      .catch((err) => console.error("Error accessing media devices.", err));
+  const handleAcceptCall = (callerId, callType) => {
+    setIncomingCall(null); // Clear the incoming call notification
+    setIsRinging(false); // Stop the ringing animation
+    startCall(callerId, callType); // Proceed with the call process
   };
 
   const handleRejectCall = () => {
-    setIncomingCall(null);
+    setIncomingCall(null); // Clear the incoming call notification
+    setIsRinging(false); // Stop the ringing animation
   };
 
   const handleEndCall = () => {
@@ -186,10 +150,12 @@ const Chat = () => {
       }
       setIsInCall(false);
       setIsCalling(false);
+      setIsRinging(false); // Reset ringing status when call ends
     }
+
     socket.emit("end_call", {
       callerId: userId,
-      receiverId: selectedUser?._id,
+      receiverId: selectedUser._id,
     });
   };
 
@@ -218,6 +184,7 @@ const Chat = () => {
         <div className="row">
           {/* User List */}
           <div className="col-lg-4 col-md-3 user-list">
+            {/* User Profile & Search */}
             <div className="d-flex align-items-center justify-content-between p-3 mb-3" style={{ backgroundColor: '#3b2895ba' }}>
               <h4 className="text-white"><i className="fa-regular fa-circle-user"></i> {username}</h4>
               <div className="profile-container">
@@ -302,28 +269,19 @@ const Chat = () => {
         </div>
 
         {/* Audio/Video Call Controls */}
-        {(isInCall || isCalling) && (
+        {(isInCall || isCalling || isRinging) && (
           <div className="call-controls position-fixed top-0 end-0 p-3" style={{ zIndex: '9999' }}>
+            {isRinging && <span>Ringing...</span>}
             <button className="btn btn-danger" onClick={handleEndCall}>End Call</button>
           </div>
         )}
 
-        {/* Local Video for Video Calls */}
-        {callType === "video" && localStream && (
-          <video ref={localVideoRef} autoPlay muted width="200" />
-        )}
-
-        {/* Remote Video for Video Calls */}
-        {callType === "video" && remoteStream && (
-          <video ref={remoteVideoRef} autoPlay width="400" />
-        )}
-
-        {/* Incoming Call Notification */}
+        {/* Incoming Call Modal */}
         {incomingCall && (
-          <div className="incoming-call-notification" style={{ zIndex: '9999', position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', backgroundColor: '#fff', padding: '20px', borderRadius: '8px' }}>
+          <div className="incoming-call-modal">
             <p>{incomingCall.callerName} is calling you!</p>
-            <button onClick={() => handleAcceptCall(incomingCall.callerId, incomingCall.callType)}>Accept</button>
-            <button onClick={handleRejectCall}>Reject</button>
+            <button className="btn btn-success" onClick={() => handleAcceptCall(incomingCall.callerId, incomingCall.callType)}>Accept</button>
+            <button className="btn btn-danger" onClick={handleRejectCall}>Reject</button>
           </div>
         )}
       </div>
