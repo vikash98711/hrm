@@ -21,7 +21,7 @@ const EditRole = () => {
 
     const GetSingleRoledata = async ()=>{
         try {
-            const response = await axios.get(`http://localhost:4000/singleRole/${id}`)
+            const response = await axios.get(`https://backfile-h9t9.onrender.com/singleRole/${id}`)
             if(response.status == 200){
               SetData(response.data.data)
 
@@ -42,7 +42,7 @@ const Handlechange = (e)=>{
 const handlesubmit = async (e)=>{
   e.preventDefault();
   try {
-    const res = await axios.post(`http://localhost:4000/updateROles/${id}`,data)
+    const res = await axios.post(`https://backfile-h9t9.onrender.com/updateROles/${id}`,data)
     if(res.status == 200){
       Swal.fire({
         title : 'sucess',
