@@ -32,47 +32,44 @@ const Chat = () => {
   const remoteVideoRef = useRef(null);
   const ringingAudioRef = useRef(new Audio("/callingsound.mp3")); // Path to ringing sound
 
-  useEffect(() => {
-    const socketInstance = io("https://backfile-h9t9.onrender.com", {
-      transports: ["websocket"],
-    });
+ // Handle incoming call (Update this part in your useEffect)
+useEffect(() => {
+  const socketInstance = io("http://localhost:4000", {
+    transports: ["websocket"],
+  });
 
-    socketInstance.emit("register_user", userId);
+  socketInstance.emit("register_user", userId);
 
-    socketInstance.on("receive_message", (messageData) => {
-      if (messageData.receiverId === selectedUser?._id) {
-        setMessages((prevMessages) => [...prevMessages, messageData]);
-      }
-    });
+  socketInstance.on("call_user", (data) => {
+    console.log("Incoming call:", data);
+    setIncomingCall(data); // Store the incoming call details
+    setIsRinging(true); // Show ringing state
+    ringingAudioRef.current.play().catch((err) => console.error("Audio play error:", err)); // Play the ringing sound
+  });
 
-    socketInstance.on("call_user", (data) => {
-      console.log("Incoming call:", data);
-      setIncomingCall(data);
-      setIsRinging(true); // Display the ringing state
-      ringingAudioRef.current.play(); // Play the ringing sound
-    });
+  socketInstance.on("accept_call", (data) => {
+    const { answer } = data;
+    if (peerConnection && answer) {
+      peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+      setIsInCall(true); // Set the call as active after accepting
+    }
+  });
 
-    socketInstance.on("accept_call", (data) => {
-      const { answer } = data;
-      if (peerConnection && answer) {
-        peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-      }
-    });
+  socketInstance.on("ice_candidate", (candidate) => {
+    if (peerConnection) {
+      peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+    }
+  });
 
-    socketInstance.on("ice_candidate", (candidate) => {
-      if (peerConnection) {
-        peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-      }
-    });
+  socketInstance.on("end_call", () => handleEndCall());
 
-    socketInstance.on("end_call", () => handleEndCall());
+  setSocket(socketInstance);
 
-    setSocket(socketInstance);
+  return () => {
+    socketInstance.disconnect();
+  };
+}, [selectedUser, userId, peerConnection]);
 
-    return () => {
-      socketInstance.disconnect();
-    };
-  }, [selectedUser, userId, peerConnection]);
 
   const fetchMessages = async (selected) => {
     try {
