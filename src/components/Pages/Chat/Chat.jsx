@@ -31,7 +31,7 @@ const Chat = () => {
 
   // Initialize socket and set up event listeners
   useEffect(() => {
-    const socketInstance = io("http://localhost:4000", {
+    const socketInstance = io("https://backfile-h9t9.onrender.com", {
       transports: ["websocket"],
     });
 
@@ -74,7 +74,7 @@ const Chat = () => {
   const fetchMessages = async (selected) => {
     try {
       const response = await axios.get(
-        `http://localhost:4000/api/messages/chat/${userId}/${selected._id}`
+        `https://backfile-h9t9.onrender.com/api/messages/chat/${userId}/${selected._id}`
       );
       setMessages(response.data);
     } catch (err) {
