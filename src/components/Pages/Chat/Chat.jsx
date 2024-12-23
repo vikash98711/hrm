@@ -1,6 +1,3 @@
-
-
-
 import React, { useContext, useState, useEffect, useRef } from "react";
 import axios from "axios";
 import { io } from "socket.io-client";
@@ -17,7 +14,7 @@ const Chat = () => {
   const [socket, setSocket] = useState(null);
   const [isCalling, setIsCalling] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
-  const [callType, setCallType] = useState(null); // "audio" or "video"
+  const [callType, setCallType] = useState("video"); // Default to video call
   const [peerConnection, setPeerConnection] = useState(null);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
@@ -32,49 +29,52 @@ const Chat = () => {
   const remoteVideoRef = useRef(null);
   const ringingAudioRef = useRef(new Audio("/callingsound.mp3")); // Path to ringing sound
 
- // Handle incoming call (Update this part in your useEffect)
-useEffect(() => {
-  const socketInstance = io("https://backfile-h9t9.onrender.com", {
-    transports: ["websocket"],
-  });
+  // Initialize socket and set up event listeners
+  useEffect(() => {
+    const socketInstance = io("http://localhost:4000", {
+      transports: ["websocket"],
+    });
 
-  socketInstance.emit("register_user", userId);
+    socketInstance.emit("register_user", userId); // Register user with the server
 
-  socketInstance.on("call_user", (data) => {
-    console.log("Incoming call:", data);
-    setIncomingCall(data); // Store the incoming call details
-    setIsRinging(true); // Show ringing state
-    ringingAudioRef.current.play().catch((err) => console.error("Audio play error:", err)); // Play the ringing sound
-  });
+    // Handle incoming call event from server
+    socketInstance.on("call_user", (data) => {
+      console.log("Incoming call:", data);
+      setIncomingCall(data); // Store the incoming call details
+      setIsRinging(true); // Show ringing state
+      ringingAudioRef.current.play().catch((err) => console.error("Audio play error:", err)); // Play the ringing sound
+    });
 
-  socketInstance.on("accept_call", (data) => {
-    const { answer } = data;
-    if (peerConnection && answer) {
-      peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-      setIsInCall(true); // Set the call as active after accepting
-    }
-  });
+    // Handle call acceptance
+    socketInstance.on("accept_call", (data) => {
+      const { answer } = data;
+      if (peerConnection && answer) {
+        peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
+        setIsInCall(true); // Set the call as active after accepting
+      }
+    });
 
-  socketInstance.on("ice_candidate", (candidate) => {
-    if (peerConnection) {
-      peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
-    }
-  });
+    // Handle ICE candidate exchange
+    socketInstance.on("ice_candidate", (candidate) => {
+      if (peerConnection) {
+        peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
+      }
+    });
 
-  socketInstance.on("end_call", () => handleEndCall());
+    // Handle call end event
+    socketInstance.on("end_call", () => handleEndCall());
 
-  setSocket(socketInstance);
+    setSocket(socketInstance);
 
-  return () => {
-    socketInstance.disconnect();
-  };
-}, [selectedUser, userId, peerConnection]);
-
+    return () => {
+      socketInstance.disconnect();
+    };
+  }, [selectedUser, userId, peerConnection]);
 
   const fetchMessages = async (selected) => {
     try {
       const response = await axios.get(
-        `https://backfile-h9t9.onrender.com/api/messages/chat/${userId}/${selected._id}`
+        `http://localhost:4000/api/messages/chat/${userId}/${selected._id}`
       );
       setMessages(response.data);
     } catch (err) {
@@ -114,11 +114,11 @@ useEffect(() => {
     return peer;
   };
 
-  const startCall = (receiverId, type) => {
-    setCallType(type);
+  // Start the call (send offer)
+  const startCall = (receiverId) => {
     setIsCalling(true);
 
-    const mediaConstraints = type === "video" ? { video: true, audio: true } : { audio: true };
+    const mediaConstraints = { video: true, audio: true };
 
     navigator.mediaDevices
       .getUserMedia(mediaConstraints)
@@ -137,7 +137,7 @@ useEffect(() => {
             receiverId,
             callerId: userId,
             offer,
-            callType: type,
+            callType: "video", // Always video call
             callerName: username,
           });
         });
@@ -145,6 +145,7 @@ useEffect(() => {
       .catch((err) => console.error("Error accessing media devices:", err));
   };
 
+  // Accept the incoming call
   const handleAcceptCall = () => {
     if (incomingCall) {
       const { offer, callerId, callType } = incomingCall;
@@ -156,7 +157,7 @@ useEffect(() => {
       const peer = initializePeerConnection();
       peer.setRemoteDescription(new RTCSessionDescription(offer));
 
-      const mediaConstraints = callType === "video" ? { video: true, audio: true } : { audio: true };
+      const mediaConstraints = { video: true, audio: true };
 
       navigator.mediaDevices
         .getUserMedia(mediaConstraints)
@@ -180,6 +181,7 @@ useEffect(() => {
     }
   };
 
+  // End the call
   const handleEndCall = () => {
     if (peerConnection) {
       peerConnection.close();
@@ -222,6 +224,7 @@ useEffect(() => {
 
   return (
     <div className="container chat-component">
+      {/* Chat UI */}
       <div className="row">
         {/* User List */}
         <div className="col-lg-4 col-md-3 user-list">
@@ -272,8 +275,7 @@ useEffect(() => {
                 <img src={selectedUser.profileImage.url} alt="No image Found" className="user-avatar me-3" />
                 <h5 className="text-primary m-0">Chat with {selectedUser.firstName}</h5>
                 <div className="call-buttons ms-auto">
-                  <button className="btn btn-primary" onClick={() => startCall(selectedUser._id, "audio")}>Audio Call</button>
-                  <button className="btn btn-primary ms-2" onClick={() => startCall(selectedUser._id, "video")}>Video Call</button>
+                  <button className="btn btn-primary ms-2" onClick={() => startCall(selectedUser._id)}>Video Call</button>
                 </div>
               </div>
               <div className="chat-body">
@@ -309,26 +311,8 @@ useEffect(() => {
           )}
         </div>
       </div>
-
-      {/* Audio/Video Call Controls */}
-      {(isInCall || isCalling || isRinging) && (
-        <div className="call-controls position-fixed top-0 end-0 p-3" style={{ zIndex: '9999' }}>
-          {isRinging && <span>Ringing...</span>}
-          <button className="btn btn-danger" onClick={handleEndCall}>End Call</button>
-        </div>
-      )}
-
-      {/* Incoming Call Modal */}
-      {incomingCall && (
-        <div className="incoming-call-modal">
-          <p>{incomingCall.callerName} is calling you!</p>
-          <button className="btn btn-success" onClick={handleAcceptCall}>Accept</button>
-          <button className="btn btn-danger" onClick={handleEndCall}>Reject</button>
-        </div>
-      )}
     </div>
   );
 };
 
 export default Chat;
-
