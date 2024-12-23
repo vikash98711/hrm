@@ -34,7 +34,7 @@ const Chat = () => {
 
  // Handle incoming call (Update this part in your useEffect)
 useEffect(() => {
-  const socketInstance = io("http://localhost:4000", {
+  const socketInstance = io("https://backfile-h9t9.onrender.com", {
     transports: ["websocket"],
   });
 
