@@ -80,7 +80,7 @@ const Chat = () => {
   const handleSelectUser = (selected) => {
     setSelectedUser(selected);
     setMessages([]);
-    fetchMessages(selected);
+    fetchMessages(selected); 
   };
 
   const initializePeerConnection = () => {
