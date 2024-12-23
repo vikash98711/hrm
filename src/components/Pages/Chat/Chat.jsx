@@ -14,7 +14,7 @@ const Chat = () => {
   const [socket, setSocket] = useState(null);
   const [isCalling, setIsCalling] = useState(false);
   const [isInCall, setIsInCall] = useState(false);
-  const [callType, setCallType] = useState("video"); // Default to video call
+  const [callType, setCallType] = useState("video");
   const [peerConnection, setPeerConnection] = useState(null);
   const [localStream, setLocalStream] = useState(null);
   const [remoteStream, setRemoteStream] = useState(null);
@@ -27,7 +27,7 @@ const Chat = () => {
   const [searchQuery, setSearchQuery] = useState("");
   const localVideoRef = useRef(null);
   const remoteVideoRef = useRef(null);
-  const ringingAudioRef = useRef(new Audio("/callingsound.mp3")); // Path to ringing sound
+  const ringingAudioRef = useRef(new Audio("/callingsound.mp3"));
 
   // Initialize socket and set up event listeners
   useEffect(() => {
@@ -35,33 +35,28 @@ const Chat = () => {
       transports: ["websocket"],
     });
 
-    socketInstance.emit("register_user", userId); // Register user with the server
+    socketInstance.emit("register_user", userId);
 
-    // Handle incoming call event from server
     socketInstance.on("call_user", (data) => {
       console.log("Incoming call:", data);
-      setIncomingCall(data); // Store the incoming call details
-      setIsRinging(true); // Show ringing state
-      ringingAudioRef.current.play().catch((err) => console.error("Audio play error:", err)); // Play the ringing sound
+      setIncomingCall(data);
+      setIsRinging(true);
+      ringingAudioRef.current.play().catch((err) => console.error("Audio play error:", err));
     });
 
-    // Handle call acceptance
     socketInstance.on("accept_call", (data) => {
-      const { answer } = data;
-      if (peerConnection && answer) {
-        peerConnection.setRemoteDescription(new RTCSessionDescription(answer));
-        setIsInCall(true); // Set the call as active after accepting
+      if (peerConnection && data.answer) {
+        peerConnection.setRemoteDescription(new RTCSessionDescription(data.answer));
+        setIsInCall(true);
       }
     });
 
-    // Handle ICE candidate exchange
     socketInstance.on("ice_candidate", (candidate) => {
       if (peerConnection) {
         peerConnection.addIceCandidate(new RTCIceCandidate(candidate));
       }
     });
 
-    // Handle call end event
     socketInstance.on("end_call", () => handleEndCall());
 
     setSocket(socketInstance);
@@ -69,7 +64,7 @@ const Chat = () => {
     return () => {
       socketInstance.disconnect();
     };
-  }, [selectedUser, userId, peerConnection]);
+  }, [userId, peerConnection]);
 
   const fetchMessages = async (selected) => {
     try {
@@ -137,7 +132,7 @@ const Chat = () => {
             receiverId,
             callerId: userId,
             offer,
-            callType: "video", // Always video call
+            callType: "video",
             callerName: username,
           });
         });
@@ -179,6 +174,17 @@ const Chat = () => {
         })
         .catch((err) => console.error("Error accessing media devices:", err));
     }
+  };
+
+  // Reject the incoming call
+  const handleRejectCall = () => {
+    setIncomingCall(null);
+    setIsRinging(false);
+    ringingAudioRef.current.pause();
+    socket.emit("end_call", {
+      receiverId: selectedUser?._id,
+      callerId: userId,
+    });
   };
 
   // End the call
@@ -224,7 +230,6 @@ const Chat = () => {
 
   return (
     <div className="container chat-component">
-      {/* Chat UI */}
       <div className="row">
         {/* User List */}
         <div className="col-lg-4 col-md-3 user-list">
@@ -301,6 +306,15 @@ const Chat = () => {
                 />
                 <button className="btn btn-success" onClick={handleSendMessage}>Send</button>
               </div>
+
+              {isRinging && incomingCall && (
+                <div className="incoming-call">
+                  <h5>Incoming Call from {incomingCall.callerName}</h5>
+                  <button onClick={handleAcceptCall}>Accept</button>
+                  <button onClick={handleRejectCall}>Reject</button>
+                </div>
+              )}
+
               <video ref={localVideoRef} autoPlay muted></video>
               <video ref={remoteVideoRef} autoPlay></video>
             </>
