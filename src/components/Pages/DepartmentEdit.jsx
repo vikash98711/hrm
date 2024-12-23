@@ -15,7 +15,7 @@ const DepartmentEdit = () => {
 
     const getSingleDepartment = async()=>{
         try {
-            const res = await axios.get(`http://localhost:4000/singleDepartment/${id}`)
+            const res = await axios.get(`https://backfile-h9t9.onrender.com/singleDepartment/${id}`)
             if(res.status == 200){
                 SetData(res.data.singledepartment)
             }
@@ -37,7 +37,7 @@ const Handlechange = (e)=>{
     const HandleSumbit = async(e)=>{
         e.preventDefault()
         try {
-            const res = await axios.post(`http://localhost:4000/deparmentUpdate/${id}`,data)
+            const res = await axios.post(`https://backfile-h9t9.onrender.com/deparmentUpdate/${id}`,data)
             if(res.status == 200){
 Swal.fire({
     text : 'success',
